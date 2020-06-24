@@ -49,7 +49,7 @@ async function correctDMRTable(meterNumbers = []) {
 
         log(result);
 
-        if (result === null) continue;
+        if (!result) continue;
 
         /*
         * Set the tempDate for the initial reading and
