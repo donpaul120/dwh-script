@@ -88,6 +88,7 @@ async function correctDMRTable(meterNumbers = []) {
         }
         while (tempDate < lastDate)
     }
+    return process.exit(0);
 }
 
 async function updateDMRRecord(meterNo, date, dmrReading) {
