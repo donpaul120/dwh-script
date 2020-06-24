@@ -106,8 +106,7 @@ async function insertDMRRecord(record) {
         .select(['DMR_METER_NO'])
         .then(function (result) {
             const meterNumbers = result.map(row => row['DMR_METER_NO']);
-            console.log(meterNumbers);
-            // correctDMRTable(meterNumbers).then();
+            correctDMRTable(meterNumbers).then();
         }).catch(err => {
         console.error(err);
     })
