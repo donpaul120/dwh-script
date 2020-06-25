@@ -68,16 +68,20 @@ async function correctDMRTable(meterNumbers = []) {
         tempReading = result['DMR_READING'];
 
         do {
-
+            let hasError = false;
+            const whereClause = {"DMR_METER_NO": meterNumber, "DMR_DATE": tempDate};
             // if (true) {
             //     log("Sleeping for a few seconds");
             //     await sleep(4000);
             // }
             console.log(meterNumber, tempDate);
-            const dmrRecord = (await knex.table(tableName).where({
-                "DMR_METER_NO": meterNumber,
-                "DMR_DATE": tempDate
-            })).shift();
+
+            const dmrRecord = await knex.table(tableName).where(whereClause).catch(err => {
+                hasError = true;
+                log(err);
+            });
+
+            if (hasError) continue;
 
             if (dmrRecord) {
                 if (!dmrRecord['DMR_READING']) {
