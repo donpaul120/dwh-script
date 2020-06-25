@@ -23,6 +23,7 @@ const knex = require('knex')({
 
 const tableName = "DMR";
 const dateFormat = "YYYY-MM-DD";
+let lock = false;
 
 const log = (msg) => console.log(msg);
 
@@ -40,7 +41,7 @@ async function getMinDMRDate(meterNumber) {
 
 async function correctDMRTable(meterNumbers = []) {
     const lastDate = moment(new Date()).subtract(2, "day").format(dateFormat);
-
+    lock = true;
     for (const meterNumber of meterNumbers) {
         let tempDate = null;
         let tempReading = null;
@@ -90,6 +91,7 @@ async function correctDMRTable(meterNumbers = []) {
         }
         while (tempDate < lastDate)
     }
+    lock = false;
     return process.exit(0);
 }
 
@@ -108,11 +110,16 @@ async function insertDMRRecord(record) {
     knex.table(tableName).distinct("DMR_METER_NO").select(['DMR_METER_NO'])
         .then(function (result) {
             const meterNumbers = result.map(row => row['DMR_METER_NO'].shift()).filter(i => i !== '0');
-            while (meterNumbers.length) {
-                setTimeout(() => {
-                    correctDMRTable(meterNumbers.slice(0, 2000)).then();
-                }, 100000);
+            let noPerBatch = 1000;
+            let index = 0;
+            while (index < meterNumbers.length) {
+                if (lock) {
+                    let offset = index * noPerBatch;
+                    setTimeout(() => {
+                        correctDMRTable(meterNumbers.slice(offset, noPerBatch)).then();
+                        index++;
+                    }, 10000);
+                }
             }
-            correctDMRTable(meterNumbers).then();
         }).catch(console.error)
 })();
