@@ -8,7 +8,7 @@ const moment = require('moment');
 
 //Database Connection
 const knex = require('knex')({
-    client: 'mssql',
+    client: process.env.DB_CLIENT,
     connection: {
         host: process.env.DB_HOST,
         user: process.env.DB_USER,
@@ -40,8 +40,8 @@ async function getMinDMRDate(meterNumber) {
 }
 
 async function correctDMRTable(meterNumbers = []) {
-    const lastDate = moment(new Date()).subtract(2, "day").format(dateFormat);
     lock = true;
+    const lastDate = moment(new Date()).subtract(2, "day").format(dateFormat);
     for (const meterNumber of meterNumbers) {
         let tempDate = null;
         let tempReading = null;
@@ -65,7 +65,7 @@ async function correctDMRTable(meterNumbers = []) {
                 "DMR_DATE": tempDate
             })).shift();
 
-            log(dmrRecord);
+            // log(dmrRecord);
 
             if (dmrRecord) {
                 if (!dmrRecord['DMR_READING']) {
@@ -92,7 +92,7 @@ async function correctDMRTable(meterNumbers = []) {
         while (tempDate < lastDate)
     }
     lock = false;
-    return process.exit(0);
+    return true;
 }
 
 async function updateDMRRecord(meterNo, date, dmrReading) {
@@ -106,20 +106,35 @@ async function insertDMRRecord(record) {
     return knex.table(tableName).insert(record);
 }
 
-(function () {
-    knex.table(tableName).distinct("DMR_METER_NO").select(['DMR_METER_NO'])
-        .then(function (result) {
-            const meterNumbers = result.map(row => row['DMR_METER_NO'].shift()).filter(i => i !== '0');
-            let noPerBatch = 1000;
-            let index = 0;
-            while (index < meterNumbers.length) {
-                if (!lock) {
-                    let offset = index * noPerBatch;
-                    setTimeout(() => {
-                        correctDMRTable(meterNumbers.slice(offset, noPerBatch)).then();
-                        index++;
-                    }, 10000);
+async function getMeterNumbers(offset, limit) {
+    const results = await knex.table(tableName).distinct("DMR_METER_NO").select(['DMR_METER_NO'])
+        .limit(limit)
+        .offset(offset);
+
+    return results.map(row => {
+        const meterNo = row['DMR_METER_NO'];
+        return (Array.isArray(meterNo)) ? meterNo.shift() : meterNo;
+    }).filter(i => i !== '0');
+}
+
+(async function () {
+    const totalRecords = (await knex.table(tableName).countDistinct('DMR_METER_NO as count')).shift().count;
+    const noPerBatch = 500;
+    let index = 0;
+
+    const interval = setInterval(async function () {
+        if (!lock && index < totalRecords) {
+            let offset = index * noPerBatch;
+            const meterNumbers = await getMeterNumbers(offset, noPerBatch);
+            console.log(meterNumbers);
+            index++;
+            correctDMRTable(meterNumbers).then(() => {
+                if (offset === totalRecords) {
+                    clearInterval(interval);
+                    process.exit(0);
                 }
-            }
-        }).catch(console.error)
+            });
+        }
+    }, 150000);
+    console.log(totalRecords);
 })();
