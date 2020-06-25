@@ -108,7 +108,7 @@ async function insertDMRRecord(record) {
     knex.table(tableName).distinct("DMR_METER_NO")
         .select(['DMR_METER_NO'])
         .then(function (result) {
-            const meterNumbers = result.map(row => row['DMR_METER_NO'].shift()).filter(i => i !== 0);
+            const meterNumbers = result.map(row => row['DMR_METER_NO'].shift()).filter(i => i !== '0');
             console.log(meterNumbers);
             correctDMRTable(meterNumbers).then();
         }).catch(err => {
