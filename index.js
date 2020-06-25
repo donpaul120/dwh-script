@@ -18,6 +18,10 @@ const knex = require('knex')({
             port: process.env.DB_PORT,
             enableArithAbort: false
         }
+    },
+    pool: {
+        min: 2,
+        max: 10
     }
 });
 
@@ -37,6 +41,10 @@ async function getMinDMRDate(meterNumber) {
         .orderBy('DMR_DATE', 'ASC')
         .limit(1);
     return result.shift();
+}
+
+async function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function correctDMRTable(meterNumbers = []) {
@@ -60,12 +68,16 @@ async function correctDMRTable(meterNumbers = []) {
         tempReading = result['DMR_READING'];
 
         do {
+
+            // if (true) {
+            //     log("Sleeping for a few seconds");
+            //     await sleep(4000);
+            // }
+            console.log(meterNumber, tempDate);
             const dmrRecord = (await knex.table(tableName).where({
                 "DMR_METER_NO": meterNumber,
                 "DMR_DATE": tempDate
             })).shift();
-
-            // log(dmrRecord);
 
             if (dmrRecord) {
                 if (!dmrRecord['DMR_READING']) {
@@ -73,7 +85,7 @@ async function correctDMRTable(meterNumbers = []) {
                     await updateDMRRecord(meterNumber, tempDate, tempReading)
                 } else {
                     tempReading = dmrRecord['DMR_READING'];
-                    log(`NEXT DMR_READING : ${tempReading}`);
+                    log(`${meterNumber} : NEXT DMR_READING : ${tempReading}`);
                 }
             } else {
                 log(`INSERTING NEW RECORD ${meterNumber} for ${tempDate}`);
@@ -119,7 +131,7 @@ async function getMeterNumbers(offset, limit) {
 
 (async function () {
     const totalRecords = (await knex.table(tableName).countDistinct('DMR_METER_NO as count')).shift().count;
-    const noPerBatch = 500;
+    const noPerBatch = 100;
     let index = 0;
 
     const interval = setInterval(async function () {
