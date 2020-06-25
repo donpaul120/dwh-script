@@ -36,7 +36,6 @@ async function getMinDMRDate(meterNumber) {
         .select(['DMR_DATE', 'DMR_READING'])
         .orderBy('DMR_DATE', 'ASC')
         .limit(1);
-    console.log(result);
     return result.shift();
 }
 
@@ -107,6 +106,7 @@ async function insertDMRRecord(record) {
     knex.table(tableName).distinct("DMR_METER_NO")
         .select(['DMR_METER_NO'])
         .then(function (result) {
+            console.log(result);
             const meterNumbers = result.map(row => row['DMR_METER_NO']);
             correctDMRTable(meterNumbers).then();
         }).catch(err => {
