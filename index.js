@@ -113,7 +113,7 @@ async function insertDMRRecord(record) {
             let noPerBatch = 1000;
             let index = 0;
             while (index < meterNumbers.length) {
-                if (lock) {
+                if (!lock) {
                     let offset = index * noPerBatch;
                     setTimeout(() => {
                         correctDMRTable(meterNumbers.slice(offset, noPerBatch)).then();
