@@ -64,6 +64,8 @@ async function correctDMRTable(meterNumbers = []) {
                 "DMR_DATE": tempDate
             })).shift();
 
+            console.log(dmrRecord);
+
             if (dmrRecord) {
                 if (!dmrRecord['DMR_READING']) {
                     log(`UPDATING ${meterNumber} for ${tempDate}`);
@@ -107,7 +109,7 @@ async function insertDMRRecord(record) {
         .select(['DMR_METER_NO'])
         .then(function (result) {
             console.log(result);
-            const meterNumbers = result.map(row => row['DMR_METER_NO']);
+            const meterNumbers = result.map(row => row['DMR_METER_NO'].shift());
             correctDMRTable(meterNumbers).then();
         }).catch(err => {
         console.error(err);
