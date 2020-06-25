@@ -27,6 +27,7 @@ const dateFormat = "YYYY-MM-DD";
 const log = (msg) => console.log(msg);
 
 async function getMinDMRDate(meterNumber) {
+    console.log(meterNumber);
     const result = await knex.table(tableName)
         .where("DMR_METER_NO", meterNumber)
         .andWhere(function () {
@@ -35,7 +36,7 @@ async function getMinDMRDate(meterNumber) {
         .select(['DMR_DATE', 'DMR_READING'])
         .orderBy('DMR_DATE', 'ASC')
         .limit(1);
-
+    console.log(result);
     return result.shift();
 }
 
