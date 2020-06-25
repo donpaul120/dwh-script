@@ -27,7 +27,6 @@ const dateFormat = "YYYY-MM-DD";
 const log = (msg) => console.log(msg);
 
 async function getMinDMRDate(meterNumber) {
-    console.log(meterNumber);
     const result = await knex.table(tableName)
         .where("DMR_METER_NO", meterNumber)
         .andWhere(function () {
@@ -41,6 +40,7 @@ async function getMinDMRDate(meterNumber) {
 
 async function correctDMRTable(meterNumbers = []) {
     const lastDate = moment(new Date()).subtract(2, "day").format(dateFormat);
+
     for (const meterNumber of meterNumbers) {
         let tempDate = null;
         let tempReading = null;
@@ -64,7 +64,7 @@ async function correctDMRTable(meterNumbers = []) {
                 "DMR_DATE": tempDate
             })).shift();
 
-            console.log(dmrRecord);
+            log(dmrRecord);
 
             if (dmrRecord) {
                 if (!dmrRecord['DMR_READING']) {
@@ -105,13 +105,14 @@ async function insertDMRRecord(record) {
 }
 
 (function () {
-    knex.table(tableName).distinct("DMR_METER_NO")
-        .select(['DMR_METER_NO'])
+    knex.table(tableName).distinct("DMR_METER_NO").select(['DMR_METER_NO'])
         .then(function (result) {
             const meterNumbers = result.map(row => row['DMR_METER_NO'].shift()).filter(i => i !== '0');
-            console.log(meterNumbers);
+            while (meterNumbers.length) {
+                setTimeout(() => {
+                    correctDMRTable(meterNumbers.slice(0, 2000)).then();
+                }, 100000);
+            }
             correctDMRTable(meterNumbers).then();
-        }).catch(err => {
-        console.error(err);
-    })
+        }).catch(console.error)
 })();
