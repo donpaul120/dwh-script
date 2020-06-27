@@ -28,6 +28,7 @@ const knex = require('knex')({
 const tableName = "DMR";
 const dateFormat = "YYYY-MM-DD";
 let lock = false;
+let batchNo = 0;
 
 const log = (msg) => console.log(msg);
 
@@ -50,9 +51,13 @@ async function sleep(ms) {
 async function correctDMRTable(meterNumbers = []) {
     lock = true;
     const lastDate = moment(new Date()).subtract(2, "day").format(dateFormat);
+    const batchStart = moment(new Date());
+
     for (const meterNumber of meterNumbers) {
         let tempDate = null;
         let tempReading = null;
+
+        const singleMeterStart = moment(new Date())
 
         const result = await getMinDMRDate(meterNumber);
 
@@ -68,10 +73,12 @@ async function correctDMRTable(meterNumbers = []) {
         tempReading = result['DMR_READING'];
 
         do {
+            log("Current Meter in batch: "+ batchNo, `Time Take: ${moment(new Date()).diff(singleMeterStart, 'minutes')}`);
+
             let hasError = false;
             const whereClause = {"DMR_METER_NO": meterNumber, "DMR_DATE": tempDate};
 
-            console.log(meterNumber, tempDate);
+            log(meterNumber, tempDate);
 
             const dmrRecords = await knex.table(tableName).where(whereClause).catch(err => {
                 hasError = true;
@@ -126,6 +133,7 @@ async function correctDMRTable(meterNumbers = []) {
         }
         while (tempDate < lastDate)
     }
+    log("Batch: "+ batchNo, `Time Taken: ${moment(new Date()).diff(batchStart, 'minutes')}`);
     lock = false;
     return true;
 }
@@ -154,11 +162,12 @@ async function getMeterNumbers(offset, limit) {
 
 (async function () {
     const totalRecords = (await knex.table(tableName).countDistinct('DMR_METER_NO as count')).shift().count;
-    const noPerBatch = 100;
+    const noPerBatch = 1000;
     let index = 0;
 
     const interval = setInterval(async function () {
         if (!lock && index < totalRecords) {
+            batchNo = index;
             let offset = index * noPerBatch;
             const meterNumbers = await getMeterNumbers(offset, noPerBatch);
             console.log(meterNumbers);
