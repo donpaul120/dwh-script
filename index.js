@@ -88,7 +88,15 @@ async function correctDMRTable(meterNumbers = []) {
             if (dmrRecord) {
                 if (!dmrRecord['DMR_READING']) {
                     log(`UPDATING ${meterNumber} for ${tempDate}`);
-                    await updateDMRRecord(meterNumber, tempDate, tempReading)
+                    let updateError = false;
+                    await updateDMRRecord(meterNumber, tempDate, tempReading).catch(err => {
+                        updateError = true;
+                        log(err);
+                    });
+                    if (updateError) {
+                        await sleep(20000);
+                        continue;
+                    }
                 } else {
                     tempReading = dmrRecord['DMR_READING'];
                     log(`${meterNumber} : NEXT DMR_READING : ${tempReading}`);
@@ -96,13 +104,22 @@ async function correctDMRTable(meterNumbers = []) {
             } else {
                 log(`INSERTING NEW RECORD ${meterNumber} for ${tempDate}`);
                 //We'll simply create a new record if we can get a dmr-reading for this date (tempDate)
+                let insertError = false;
                 await insertDMRRecord({
                     "DMR_METER_NO": meterNumber,
                     "DMR_DATE": tempDate,
                     "DMR_READING": tempReading,
                     "DMR_SOURCE": "DWH",
                     "DMR_DATE_CREATED": moment(tempDate).add(1, "day").format(dateFormat)
+                }).catch((err) => {
+                    log(err);
+                    insertError = true;
                 });
+
+                if (insertError) {
+                    await sleep(20000);
+                    continue;
+                }
             }
 
             tempDate = moment(tempDate).add(1, "day").format(dateFormat);
