@@ -73,7 +73,7 @@ async function correctDMRTable(meterNumbers = []) {
         tempReading = result['DMR_READING'];
 
         do {
-            log("Current Meter in batch: "+ batchNo, `Time Take: ${moment(new Date()).diff(singleMeterStart, 'minutes')}`);
+            log("Current Meter in batch: "+ batchNo + ` Time Taken: ${moment(new Date()).diff(singleMeterStart, 'minutes')}`);
 
             let hasError = false;
             const whereClause = {"DMR_METER_NO": meterNumber, "DMR_DATE": tempDate};
@@ -133,7 +133,7 @@ async function correctDMRTable(meterNumbers = []) {
         }
         while (tempDate < lastDate)
     }
-    log("Batch: "+ batchNo, `Time Taken: ${moment(new Date()).diff(batchStart, 'minutes')}`);
+    log("Batch: "+ batchNo + ` Time Taken: ${moment(new Date()).diff(batchStart, 'minutes')}`);
     lock = false;
     return true;
 }
