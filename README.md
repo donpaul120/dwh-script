@@ -14,12 +14,13 @@ clone the repository by running this command
 - git clone https://github.com/donpaul120/dwh-script.git
 
 ##### Step 2
-Install Dependencies
+Install Dependencies \
+Navigate into the cloned repository and run the command below
 - npm install
 
 ##### Step 3
-Configuration Data Source and Environment
-- Create a .env file
+Configure your Data Source via Environmental Variables file
+- Create a .env file within the cloned repository
 - configure your data-source in the .env file
 
 #### Configuration Example
