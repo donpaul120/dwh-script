@@ -53,7 +53,13 @@ async function processMeterNumbers(meterNumbers = []) {
         let tempDate = moment(md[0]['DMR_DATE']).format(dateFormat);
         let tempReading = 0, tempDrmLar = 0, tempDrmCons = 0;
         let i = 0;
-
+        "DMR_METER_NO": meterNo,
+            "DMR_DATE": tempDate,
+            "DMR_READING": tempReading,
+            "DMR_SOURCE": "DWH",
+            "DMR2_LAR": tempReading,
+            "DMR2_CONS": 0,
+            "DMR_DATE_CREATED": moment(tempDate).add(1, "day").format(dateFormat)
         while (tempDate < lastDate) {
             const dmr = md[i];
             const dmrDate = (dmr) ? moment(dmr['DMR_DATE']).format(dateFormat) : lastDate;
@@ -63,13 +69,7 @@ async function processMeterNumbers(meterNumbers = []) {
             if (!dmr || dmrDate !== tempDate) {
                 while (tempDate < dmrDate) {
                     inserts.push({
-                        "DMR_METER_NO": meterNo,
-                        "DMR_DATE": tempDate,
-                        "DMR_READING": tempReading,
-                        "DMR_SOURCE": "DWH",
-                        "DMR2_LAR": tempReading,
-                        "DMR2_CONS": 0,
-                        "DMR_DATE_CREATED": moment(tempDate).add(1, "day").format(dateFormat)
+
                     });
                     tempDate = moment(tempDate).add(1, "day").format(dateFormat);
                 }

@@ -36,3 +36,19 @@ DB_CLIENT=mssql
 ##### Step 4
 Run Script
 - npm start
+
+
+
+
+#### Note
+
+The script only understands the below columns from the data-source
+```array
+"DMR_METER_NO"
+"DMR_DATE"
+"DMR_READING"
+"DMR_SOURCE"
+"DMR2_LAR"
+"DMR2_CONS"
+"DMR_DATE_CREATED"
+```
