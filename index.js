@@ -33,7 +33,7 @@ const log = (msg, ...extras) => console.log(msg, ...extras);
 async function getDMRForMeter(meterNumber) {
     return knex.table(tableName)
         .where("DMR_METER_NO", meterNumber)
-        .select(['DMR_DATE', 'DMR_READING'])
+        .select(['DMR_DATE', 'DMR_READING', 'DMR2_LAR', 'DMR2_CONS'])
         .orderBy('DMR_DATE', 'ASC');
 }
 
@@ -51,7 +51,7 @@ async function processMeterNumbers(meterNumbers = []) {
         const updates = [];
 
         let tempDate = moment(md[0]['DMR_DATE']).format(dateFormat);
-        let tempReading = 0;
+        let tempReading = 0, tempDrmLar = 0, tempDrmCons = 0;
         let i = 0;
 
         while (tempDate < lastDate) {
@@ -67,17 +67,23 @@ async function processMeterNumbers(meterNumbers = []) {
                         "DMR_DATE": tempDate,
                         "DMR_READING": tempReading,
                         "DMR_SOURCE": "DWH",
+                        "DMR2_LAR": tempReading,
+                        "DMR2_CONS": 0,
                         "DMR_DATE_CREATED": moment(tempDate).add(1, "day").format(dateFormat)
                     });
                     tempDate = moment(tempDate).add(1, "day").format(dateFormat);
                 }
                 continue;
-            } else if (dmr['DMR_READING'] == null) {
-                const update = {"DMR_READING": tempReading};
+            } else if (dmr['DMR_READING'] == null || !dmr['DMR2_LAR'] || !dmr['DMR2_CONS']) {
+                const reading = dmr['DMR_READING'] || tempReading;
+                const consumption = reading - tempReading;
+                const update = {"DMR_READING": reading, "DMR2_LAR":tempReading, "DMR2_CONS":consumption};
                 const where = {"DMR_METER_NO": meterNo, "DMR_DATE": tempDate};
                 updates.push({update, where});
             } else {
                 tempReading = dmr['DMR_READING'];
+                tempDrmLar = dmr['DMR2_LAR'];
+                tempDrmCons = tempReading - tempDrmLar;
             }
 
             tempDate = moment(tempDate).add(1, "day").format(dateFormat);
@@ -91,7 +97,7 @@ async function processMeterNumbers(meterNumbers = []) {
 }
 
 async function updateBatch(updateRecords) {
-    if(!updateRecords.length) return ;
+    if (!updateRecords.length) return;
 
     let batchCounter = 0;
 
@@ -124,6 +130,7 @@ async function updateBatch(updateRecords) {
 function insertBatch(records) {
     if (!records.length) return;
     knex.batchInsert(tableName, records).then(ids => {
+        console.log(records);
         log(`Completed Batch Insert of ${records.length} DMR records`, ids);
     }).catch(error => {
         console.error(error);
@@ -157,7 +164,7 @@ async function getMeterNumbers(offset, limit) {
         await processMeterNumbers(meterNumbers);
         index++;
 
-        if(index >= totalRecords){
+        if (index >= totalRecords) {
             console.log("Elapsed Time::", Date.now() - startTime);
         }
     }
