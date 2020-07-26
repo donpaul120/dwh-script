@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "dmr": "node index.js",
+    "dmr2": "node dmr2.js"
   },
   "keywords": [],
   "author": "",
