@@ -62,7 +62,7 @@ async function processMeterNumbers(meterNumbers = []) {
                     inserts.push({
                         "DMR2_METER_NO": meterNo,
                         "DMR2_DATE": tempDate,
-                        "DMR2_PAR": tempReading,
+                        "DMR2_PAR": (dmr) ? dmr['DMR2_PAR'] || tempReading : tempReading,
                         "DMR2_SOURCE": "DWH",
                         "DMR2_LAR": tempReading,
                         "DMR2_CONS": 0,
@@ -70,11 +70,12 @@ async function processMeterNumbers(meterNumbers = []) {
                     });
                     tempDate = moment(tempDate).add(1, "day").format(dateFormat);
                 }
+                tempReading = (dmr) ? dmr['DMR2_PAR'] || tempReading : tempReading;
                 continue;
-            } else if (!dmr['DMR2_LAR'] || !dmr['DMR2_CONS']) {
+            } else if (dmr['DMR2_PAR'] == null || !dmr['DMR2_LAR'] || !dmr['DMR2_CONS']) {
                 const reading = dmr['DMR2_PAR'] || tempReading;
                 const consumption = reading - tempReading;
-                const update = {"DMR2_PAR": reading, "DMR2_LAR":tempReading, "DMR2_CONS":consumption};
+                const update = {"DMR2_PAR": reading, "DMR2_LAR": tempReading, "DMR2_CONS": consumption};
                 const where = {"DMR2_METER_NO": meterNo, "DMR2_DATE": tempDate};
                 updates.push({update, where});
             } else {
@@ -104,7 +105,7 @@ async function processMeterNumbers(meterNumbers = []) {
 
     while (index < totalRecords) {
         let offset = index * noPerBatch;
-        const meterNumbers = await getMeterNumbers(knex, tableName, 'DMR2_METER_NO' ,offset, noPerBatch);
+        const meterNumbers = await getMeterNumbers(knex, tableName, 'DMR2_METER_NO', offset, noPerBatch);
         await processMeterNumbers(meterNumbers);
         index++;
 
