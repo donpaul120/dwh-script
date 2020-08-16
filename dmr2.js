@@ -26,7 +26,7 @@ const knex = require('knex')({
     }
 });
 
-const tableName = "DMR2";
+const tableName = "DMR";
 const dateFormat = "YYYY-MM-DD";
 
 const log = (msg, ...extras) => console.log(msg, ...extras);
