@@ -15,12 +15,15 @@ const knex = require('knex')({
         user: process.env.DB_USER,
         password: process.env.DB_PASS,
         database: process.env.DB_NAME,
+        connectionTimeout:300000,
+        requestTimeout: 300000,
         options: {
             port: process.env.DB_PORT,
             enableArithAbort: false
         }
     },
     pool: {
+        idleTimeoutMillis: 300000,
         min: 2,
         max: 1000
     }
