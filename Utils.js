@@ -1,3 +1,13 @@
+const fs = require('fs');
+const util = require('util');
+const stdout = process.stdout;
+const logFile = fs.createWriteStream('combine.log', {flags:'w'});
+
+function log(msg){
+    logFile.write(util.format(msg) + '\n');
+    stdout.write(util.format(msg) + '\n');
+}
+
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -8,11 +18,11 @@ async function updateBatch(knex, tableName, updateRecords) {
     let batchCounter = 0;
 
     const doUpdate = async (record) => {
-        console.log("Updating Record", record);
+        log(`Updating Record: ${record}`);
         return knex.table(tableName).update(record.update).where(record.where)
-            .then(console.log)
+            .then(log)
             .catch(async (err) => {
-                console.error(err);
+                log(err);
                 await sleep(10000);
                 //TODO(check error type before retrying)
                 await doUpdate(record);
@@ -22,9 +32,9 @@ async function updateBatch(knex, tableName, updateRecords) {
     for (let record of updateRecords) {
         //let's sleep after 50 records
         if (batchCounter % 50 === 0) {
-            console.log("Going to sleep now for updates");
-            await sleep(15000);
-            console.log("Resuming updates");
+            log("Going to sleep(10000ms) now for updates");
+            await sleep(10000);
+            log("Resuming updates");
         }
 
         await doUpdate(record);
@@ -36,10 +46,10 @@ async function updateBatch(knex, tableName, updateRecords) {
 function insertBatch(knex, tableName, records) {
     if (!records.length) return;
     knex.batchInsert(tableName, records).then(ids => {
-        console.log(records);
-        console.log(`Completed Batch Insert of ${records.length} DMR records`, ids);
+        log(`Records Inserted: ${records}`);
+        log(`Completed Batch Insert of ${records.length} DMR records ${ids}`);
     }).catch(error => {
-        console.error(error);
+        log(`Batch Insert Error : ${error}`);
     });
 }
 

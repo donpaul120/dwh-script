@@ -25,7 +25,7 @@ const knex = require('knex')({
     pool: {
         idleTimeoutMillis: 300000,
         min: 2,
-        max: 1000
+        max: 2000
     }
 });
 
