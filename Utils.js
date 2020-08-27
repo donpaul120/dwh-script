@@ -66,5 +66,5 @@ async function getMeterNumbers(knex, tableName, column, offset, limit) {
 }
 
 module.exports = {
-    updateBatch, insertBatch, getMeterNumbers
+    updateBatch, insertBatch, getMeterNumbers, log
 };
