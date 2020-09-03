@@ -6,8 +6,8 @@ let insertedRecords = 0;
 let updateRecords = 0;
 
 function log(msg){
-    logFile.write(util.format(JSON.stringify(msg)) + '\n');
-    stdout.write(util.format(JSON.stringify(msg)) + '\n');
+    logFile.write(util.format(msg) + '\n');
+    stdout.write(util.format(msg) + '\n');
 }
 
 async function sleep(ms) {
@@ -51,11 +51,12 @@ async function updateBatch(knex, tableName, updateRecords) {
 function insertBatch(knex, tableName, records) {
     if (!records.length) return;
     knex.batchInsert(tableName, records).then(ids => {
-        insertedRecords++;
-        log(`Records Inserted: ${records}`);
+        insertedRecords += records.length;
+        log(`Records Inserted: ${JSON.stringify(records)}`);
         log(`Completed Batch Insert of ${records.length} DMR records ${ids}`);
         log(`Processed Records = ${insertedRecords}`);
     }).catch(error => {
+        log(`Failed Records : ${JSON.stringify(records)}`);
         log(`Batch Insert Error : ${error}`);
     });
 }
