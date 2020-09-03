@@ -2,10 +2,12 @@ const fs = require('fs');
 const util = require('util');
 const stdout = process.stdout;
 const logFile = fs.createWriteStream('combine.log', {flags:'w'});
+let insertedRecords = 0;
+let updateRecords = 0;
 
 function log(msg){
-    logFile.write(util.format(msg) + '\n');
-    stdout.write(util.format(msg) + '\n');
+    logFile.write(util.format(JSON.stringify(msg)) + '\n');
+    stdout.write(util.format(JSON.stringify(msg)) + '\n');
 }
 
 async function sleep(ms) {
@@ -20,7 +22,10 @@ async function updateBatch(knex, tableName, updateRecords) {
     const doUpdate = async (record) => {
         log(`Updating Record: ${record}`);
         return knex.table(tableName).update(record.update).where(record.where)
-            .then(log)
+            .then(res => {
+                updateRecords++;
+                log(`Updated Records = ${updateRecords}`);
+            })
             .catch(async (err) => {
                 log(err);
                 await sleep(10000);
@@ -46,8 +51,10 @@ async function updateBatch(knex, tableName, updateRecords) {
 function insertBatch(knex, tableName, records) {
     if (!records.length) return;
     knex.batchInsert(tableName, records).then(ids => {
+        insertedRecords++;
         log(`Records Inserted: ${records}`);
         log(`Completed Batch Insert of ${records.length} DMR records ${ids}`);
+        log(`Processed Records = ${insertedRecords}`);
     }).catch(error => {
         log(`Batch Insert Error : ${error}`);
     });
