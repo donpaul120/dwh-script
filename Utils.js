@@ -57,6 +57,7 @@ function insertBatch(knex, tableName, records) {
         log(`Processed Records = ${insertedRecords}`);
     }).catch(error => {
         log(`Failed Records : ${JSON.stringify(records)}`);
+        log(`Failed Records Size: ${records.length}`);
         log(`Batch Insert Error : ${error}`);
     });
 }
