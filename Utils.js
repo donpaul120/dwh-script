@@ -3,7 +3,7 @@ const util = require('util');
 const stdout = process.stdout;
 const logFile = fs.createWriteStream('combine.log', {flags:'w'});
 let insertedRecords = 0;
-let updateRecords = 0;
+let nUpdateRecords = 0;
 
 function log(msg){
     logFile.write(util.format(msg) + '\n');
@@ -23,8 +23,8 @@ async function updateBatch(knex, tableName, updateRecords) {
         log(`Updating Record: ${record}`);
         return knex.table(tableName).update(record.update).where(record.where)
             .then(res => {
-                updateRecords++;
-                log(`Updated Records = ${updateRecords}`);
+                nUpdateRecords++;
+                log(`Updated Records = ${nUpdateRecords}`);
             })
             .catch(async (err) => {
                 log(err);
@@ -50,7 +50,7 @@ async function updateBatch(knex, tableName, updateRecords) {
 
 function insertBatch(knex, tableName, records) {
     if (!records.length) return;
-    knex.batchInsert(tableName, records).then(ids => {
+    knex.batchInsert(tableName, records, 50).then(ids => {
         insertedRecords += records.length;
         log(`Records Inserted: ${JSON.stringify(records)}`);
         log(`Completed Batch Insert of ${records.length} DMR records ${ids}`);
