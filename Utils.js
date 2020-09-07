@@ -5,9 +5,9 @@ const logFile = fs.createWriteStream('combine.log', {flags:'w'});
 let insertedRecords = 0;
 let nUpdateRecords = 0;
 
-function log(msg){
-    logFile.write(util.format(msg) + '\n');
-    stdout.write(util.format(msg) + '\n');
+function log(msg, ...extras){
+    logFile.write(util.format(msg, extras) + '\n');
+    stdout.write(util.format(msg, extras) + '\n');
 }
 
 async function sleep(ms) {

@@ -4,7 +4,7 @@
  * @since 1.0
  */
 require('dotenv').config();
-const {updateBatch, insertBatch, getMeterNumbers} = require('./Utils');
+const {updateBatch, insertBatch, getMeterNumbers, log} = require('./Utils');
 const moment = require('moment');
 
 //Database Connection
@@ -32,7 +32,8 @@ const knex = require('knex')({
 const tableName = "DMR";
 const dateFormat = "YYYY-MM-DD";
 
-const log = (msg, ...extras) => console.log(msg, ...extras);
+// const log = (msg, ...extras) => console.log(msg, ...extras);
+let meterNoCount = 0;
 
 async function getDMRForMeter(meterNumber) {
     return knex.table(tableName)
@@ -45,7 +46,10 @@ async function processMeterNumbers(meterNumbers = [], maxDate) {
     const lastDate = moment(maxDate).subtract(1, "day").format(dateFormat);
 
     for (let meterNo of meterNumbers) {
+        meterNoCount++;
+        log(`MeterNoCount: ${meterNoCount},  MeterNumber: ${meterNo}`);
         const md = await getDMRForMeter(meterNo);
+
 
         const inserts = [];
         const updates = [];
@@ -117,12 +121,13 @@ async function processMeterNumbers(meterNumbers = [], maxDate) {
 
     while (index < totalRecords) {
         let offset = index * noPerBatch;
+        log(`Current Index : ${index}`);
         const meterNumbers = await getMeterNumbers(knex, tableName, 'DMR_METER_NO', offset, noPerBatch);
         await processMeterNumbers(meterNumbers, endDate);
         index++;
 
         if (index >= totalRecords) {
-            console.log("Elapsed Time::", Date.now() - startTime);
+            log("Elapsed Time::", Date.now() - startTime);
         }
     }
 
