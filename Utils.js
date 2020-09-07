@@ -65,6 +65,7 @@ function insertBatch(knex, tableName, records) {
 
 async function getMeterNumbers(knex, tableName, column, offset, limit) {
     const results = await knex.table(tableName).distinct(column).select([column])
+        .orderBy(column)
         .limit(limit)
         .offset(offset);
 
