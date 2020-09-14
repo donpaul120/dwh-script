@@ -15,7 +15,7 @@ const knex = require('knex')({
         user: process.env.DB_USER,
         password: process.env.DB_PASS,
         database: process.env.DB_NAME,
-        connectionTimeout:3600000,
+        connectionTimeout: 3600000,
         requestTimeout: 3600000,
         options: {
             port: process.env.DB_PORT,
@@ -52,6 +52,7 @@ async function processMeterNumbers(meterNumbers = [], maxDate) {
             log(`${meterNo}`, err);
         });
 
+        if (!md) continue;
 
         const inserts = [];
         const updates = [];
