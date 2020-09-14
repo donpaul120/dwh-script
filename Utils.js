@@ -52,7 +52,7 @@ function insertBatch(knex, tableName, records) {
     if (!records.length) return;
     knex.batchInsert(tableName, records, 50).then(ids => {
         insertedRecords += records.length;
-        log(`Records Inserted: ${JSON.stringify(records)}`);
+        // log(`Records Inserted: ${JSON.stringify(records)}`);
         log(`Completed Batch Insert of ${records.length} DMR records ${ids}`);
         log(`Processed Records = ${insertedRecords}`);
     }).catch(error => {

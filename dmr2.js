@@ -117,7 +117,7 @@ async function processMeterNumbers(meterNumbers = [], maxDate) {
     log("TotalNumberOfRecords:", totalRecords);
 
     const noPerBatch = 1000;
-    let index = 0;
+    let index = 7;
 
     while (index < totalRecords) {
         let offset = index * noPerBatch;
