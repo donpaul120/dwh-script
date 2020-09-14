@@ -48,7 +48,9 @@ async function processMeterNumbers(meterNumbers = [], maxDate) {
     for (let meterNo of meterNumbers) {
         meterNoCount++;
         log(`MeterNoCount: ${meterNoCount},  MeterNumber: ${meterNo}`);
-        const md = await getDMRForMeter(meterNo);
+        const md = await getDMRForMeter(meterNo).catch(err => {
+            log(`${meterNo}`, err);
+        });
 
 
         const inserts = [];
@@ -117,7 +119,7 @@ async function processMeterNumbers(meterNumbers = [], maxDate) {
     log("TotalNumberOfRecords:", totalRecords);
 
     const noPerBatch = 1000;
-    let index = 7;
+    let index = 8;
 
     while (index < totalRecords) {
         let offset = index * noPerBatch;
