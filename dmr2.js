@@ -4,7 +4,7 @@
  * @since 1.0
  */
 require('dotenv').config();
-const {updateBatch, insertBatch, getMeterNumbers, log} = require('./Utils');
+const {updateBatch, insertBatch, getMeterNumbers, log, lastMeterRecord} = require('./Utils');
 const moment = require('moment');
 
 //Database Connection
@@ -29,7 +29,7 @@ const knex = require('knex')({
     }
 });
 
-const tableName = "DMR";
+const tableName = "DMR2";
 const dateFormat = "YYYY-MM-DD";
 
 // const log = (msg, ...extras) => console.log(msg, ...extras);
@@ -43,14 +43,14 @@ async function getDMRForMeter(meterNumber) {
 }
 
 async function processMeterNumbers(meterNumbers = [], maxDate) {
-    const lastDate = moment(maxDate).subtract(1, "day").format(dateFormat);
 
     for (let meterNo of meterNumbers) {
         meterNoCount++;
         log(`MeterNoCount: ${meterNoCount},  MeterNumber: ${meterNo}`);
-        const md = await getDMRForMeter(meterNo).catch(err => {
-            log(`${meterNo}`, err);
-        });
+        const md = await getDMRForMeter(meterNo).catch(err => log(`${meterNo}`, err));
+        const lastDate = moment(lastMeterRecord(md)['DMR_DATE']).format(dateFormat);
+
+        console.log(lastMeterRecord(md)['DMR_DATE']);
 
         if (!md) continue;
 
@@ -62,6 +62,7 @@ async function processMeterNumbers(meterNumbers = [], maxDate) {
         let i = 0;
 
         while (tempDate < lastDate) {
+            console.log(tempDate, lastDate);
             const dmr = md[i];
             const dmrDate = (dmr) ? moment(dmr['DMR_DATE']).format(dateFormat) : lastDate;
 
@@ -115,18 +116,18 @@ async function processMeterNumbers(meterNumbers = [], maxDate) {
 (async function () {
     const startTime = Date.now();
     const totalRecords = (await knex.table(tableName).countDistinct('DMR_METER_NO as count')).shift().count;
-    const endDate = (await knex.table(tableName).max('DMR_DATE as end_date').where("DMR_SOURCE", 'TMR')).shift()['end_date'];
+    //const endDate = (await knex.table(tableName).max('DMR_DATE as end_date').where("DMR_SOURCE", 'TMR')).shift()['end_date'];
 
     log("TotalNumberOfRecords:", totalRecords);
 
     const noPerBatch = 1000;
-    let index = 8;
+    let index = 0;
 
     while (index < totalRecords) {
         let offset = index * noPerBatch;
         log(`Current Index : ${index}`);
         const meterNumbers = await getMeterNumbers(knex, tableName, 'DMR_METER_NO', offset, noPerBatch);
-        await processMeterNumbers(meterNumbers, endDate);
+        await processMeterNumbers(meterNumbers, undefined);
         index++;
 
         if (index >= totalRecords) {

@@ -1,11 +1,11 @@
 const fs = require('fs');
 const util = require('util');
 const stdout = process.stdout;
-const logFile = fs.createWriteStream('combine.log', {flags:'w'});
+const logFile = fs.createWriteStream('combine.log', {flags: 'w'});
 let insertedRecords = 0;
 let nUpdateRecords = 0;
 
-function log(msg, ...extras){
+function log(msg, ...extras) {
     logFile.write(util.format(msg, extras) + '\n');
     stdout.write(util.format(msg, extras) + '\n');
 }
@@ -75,6 +75,10 @@ async function getMeterNumbers(knex, tableName, column, offset, limit) {
     }).filter(i => i !== '0');
 }
 
+function lastMeterRecord(args) {
+    return args.slice(args.length - 1).shift();
+}
+
 module.exports = {
-    updateBatch, insertBatch, getMeterNumbers, log
+    updateBatch, insertBatch, getMeterNumbers, log, lastMeterRecord
 };
