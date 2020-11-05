@@ -48,11 +48,12 @@ async function processMeterNumbers(meterNumbers = [], maxDate) {
         meterNoCount++;
         log(`MeterNoCount: ${meterNoCount},  MeterNumber: ${meterNo}`);
         const md = await getDMRForMeter(meterNo).catch(err => log(`${meterNo}`, err));
+
+        if (!md) continue;
+
         const lastDate = moment(lastMeterRecord(md)['DMR_DATE']).format(dateFormat);
 
         console.log(lastMeterRecord(md)['DMR_DATE']);
-
-        if (!md) continue;
 
         const inserts = [];
         const updates = [];
