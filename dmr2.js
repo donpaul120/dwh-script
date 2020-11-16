@@ -29,36 +29,50 @@ const knex = require('knex')({
     }
 });
 
-const tableName = "DMR";
+const tableName = "DMR2";
 const dateFormat = "YYYY-MM-DD";
 
 // const log = (msg, ...extras) => console.log(msg, ...extras);
 let meterNoCount = 0;
 
-async function getDMRForMeter(meterNumber) {
+async function getDMRForMeter(...meterNumber) {
     return knex.table(tableName)
-        .where("DMR_METER_NO", meterNumber)
-        .select(['DMR_DATE', 'DMR_PAR', 'DMR_LAR', 'DMR_CONS'])
+        .whereIn('DMR_METER_NO', meterNumber)
+        .select(['DMR_METER_NO','DMR_DATE', 'DMR_PAR', 'DMR_LAR', 'DMR_CONS'])
         .orderBy('DMR_DATE', 'ASC');
 }
 
-async function processMeterNumbers(meterNumbers = [], maxDate) {
+/**
+ * Process all meter numbers.
+ *
+ * The designed algorithm specified doesn't determine most of the flow within this
+ * code as the algorithm doesn't put into exact consideration certain aspect of
+ * database calls, locking etc.
+ *
+ * @param meterNumbers
+ * @returns {Promise<boolean>}
+ */
+async function processMeterNumbers(meterNumbers = []) {
+    //We need to fetch all the DMR for the meter numbers
+    const allDmr = (await getDMRForMeter(...meterNumbers.map(m => m['DMR_METER_NO']))).reduce((acc, cValue)=> {
+        acc[cValue['DMR_METER_NO']] = acc[cValue['DMR_METER_NO']] || [];
+        acc[cValue['DMR_METER_NO']].push(cValue);
+        return acc;
+    }, Object.create(null));
 
-    for (let meterNo of meterNumbers) {
+    for (let {DMR_METER_NO: meterNo, MIN_DATE: startDate, MAX_DATE: lastDate} of meterNumbers) {
         meterNoCount++;
         log(`MeterNoCount: ${meterNoCount},  MeterNumber: ${meterNo}`);
-        const md = await getDMRForMeter(meterNo).catch(err => log(`${meterNo}`, err));
+        const md = allDmr[meterNo];//await getDMRForMeter(meterNo).catch(err => log(`${meterNo}`, err));
 
         if (!md) continue;
 
-        const lastDate = moment(lastMeterRecord(md)['DMR_DATE']).format(dateFormat);
-
-        console.log(lastMeterRecord(md)['DMR_DATE']);
+        lastDate = moment(lastDate).format(dateFormat);
 
         const inserts = [];
         const updates = [];
 
-        let tempDate = moment(md[0]['DMR_DATE']).format(dateFormat);
+        let tempDate = moment(startDate).format(dateFormat);
         let tempReading = 0, tempDrmLar = 0;
         let i = 0;
 
@@ -117,18 +131,17 @@ async function processMeterNumbers(meterNumbers = [], maxDate) {
 (async function () {
     const startTime = Date.now();
     const totalRecords = (await knex.table(tableName).countDistinct('DMR_METER_NO as count')).shift().count;
-    //const endDate = (await knex.table(tableName).max('DMR_DATE as end_date').where("DMR_SOURCE", 'TMR')).shift()['end_date'];
 
     log("TotalNumberOfRecords:", totalRecords);
 
-    const noPerBatch = 1000;
+    const noPerBatch = 100000;
     let index = 0;
 
     while (index < totalRecords) {
         let offset = index * noPerBatch;
         log(`Current Index : ${index}`);
         const meterNumbers = await getMeterNumbers(knex, tableName, 'DMR_METER_NO', offset, noPerBatch);
-        await processMeterNumbers(meterNumbers, undefined);
+        await processMeterNumbers(meterNumbers);
         index++;
 
         if (index >= totalRecords) {

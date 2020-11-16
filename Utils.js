@@ -64,15 +64,16 @@ function insertBatch(knex, tableName, records) {
 
 
 async function getMeterNumbers(knex, tableName, column, offset, limit) {
-    const results = await knex.table(tableName).distinct(column).select(column)
+    const results = await knex.table(tableName)
+        .min('DMR_DATE as MIN_DATE')
+        .max('DMR_DATE as MAX_DATE')
+        .select(column)
         .orderBy(`${tableName}.${column}`)
+        .groupBy(`${tableName}.${column}`)
         .limit(limit)
         .offset(offset);
 
-    return results.map(row => {
-        const meterNo = row[column];
-        return (Array.isArray(meterNo)) ? meterNo.shift() : meterNo;
-    }).filter(i => i !== '0');
+    return results.filter(i => i['DMR_METER_NO'] !== '0');
 }
 
 function lastMeterRecord(args) {
