@@ -47,18 +47,23 @@ async function getDMRForMeter(...meterNumber) {
  *
  * The designed algorithm specified doesn't determine most of the flow within this
  * code as the algorithm doesn't put into exact consideration certain aspect of
- * database calls, locking etc.
+ * database calls, locking, too many parameters etc.
+ etc.
  *
  * @param meterNumbers
  * @returns {Promise<boolean>}
  */
 async function processMeterNumbers(meterNumbers = []) {
+    console.log(meterNumbers);
     //We need to fetch all the DMR for the meter numbers
     const allDmr = (await getDMRForMeter(...meterNumbers.map(m => m['DMR_METER_NO']))).reduce((acc, cValue)=> {
+        console.log(cValue);
         acc[cValue['DMR_METER_NO']] = acc[cValue['DMR_METER_NO']] || [];
         acc[cValue['DMR_METER_NO']].push(cValue);
         return acc;
     }, Object.create(null));
+
+    console.log(allDmr);
 
     for (let {DMR_METER_NO: meterNo, MIN_DATE: startDate, MAX_DATE: lastDate} of meterNumbers) {
         meterNoCount++;
@@ -134,7 +139,7 @@ async function processMeterNumbers(meterNumbers = []) {
 
     log("TotalNumberOfRecords:", totalRecords);
 
-    const noPerBatch = 100000;
+    const noPerBatch = 2000;
     let index = 0;
 
     while (index < totalRecords) {
