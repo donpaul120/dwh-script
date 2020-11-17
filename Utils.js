@@ -20,7 +20,7 @@ async function updateBatch(knex, tableName, updateRecords) {
     let batchCounter = 0;
 
     const doUpdate = async (record) => {
-        log(`Updating Record: ${record}`);
+        log(`Updating Record: ${JSON.stringify(record)}`);
         return knex.table(tableName).update(record.update).where(record.where)
             .then(res => {
                 nUpdateRecords++;

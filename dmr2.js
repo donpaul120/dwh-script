@@ -139,7 +139,7 @@ async function processMeterNumbers(meterNumbers = []) {
 
     log("TotalNumberOfRecords:", totalRecords);
 
-    const noPerBatch = 2000;
+    const noPerBatch = 20;
     let index = 0;
 
     while (index < totalRecords) {
